@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexChat — Sign in</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --t: #c9d1d9;
+      --tm: #8b949e;
+      --tb: #f0f6fc;
+      --green: #3fb950;
+      --blue: #58a6ff;
+      --red: #f85149;
+      --radius: 8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--t);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .logo h1 { color: var(--tb); font-size: 22px; font-weight: 700; }
+    .logo p  { color: var(--tm); font-size: 12px; margin-top: 4px; font-family: monospace; }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      color: var(--tm);
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    .tab.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--tm);
+      margin-bottom: 4px;
+      margin-top: 14px;
+    }
+    input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--tb);
+      font-size: 13px;
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: var(--blue); }
+
+    .btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 10px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover  { opacity: .88; }
+    .btn:active { opacity: .75; }
+
+    .error {
+      display: none;
+      background: rgba(248,81,73,.12);
+      border: 1px solid rgba(248,81,73,.4);
+      border-radius: 6px;
+      color: var(--red);
+      font-size: 12px;
+      padding: 8px 10px;
+      margin-top: 12px;
+    }
+    .error.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <h1>NexChat</h1>
+      <p>real-time chat · WebSocket · Django Channels</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login"    onclick="showTab('login')">Sign in</button>
+      <button class="tab"        id="tab-register" onclick="showTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <label>Username</label>
+      <input id="login-username" type="text" autocomplete="username" placeholder="your_username" />
+      <label>Password</label>
+      <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <div class="error" id="login-error"></div>
+      <button class="btn" onclick="doLogin()">Sign in</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none">
+      <label>Username</label>
+      <input id="reg-username" type="text" autocomplete="username" placeholder="your_username" />
+      <label>Email</label>
+      <input id="reg-email" type="email" autocomplete="email" placeholder="you@example.com" />
+      <label>Display name <span style="color:var(--tm)">(optional)</span></label>
+      <input id="reg-display" type="text" placeholder="How others see you" />
+      <label>Password</label>
+      <input id="reg-password" type="password" autocomplete="new-password" placeholder="••••••••" />
+      <label>Confirm password</label>
+      <input id="reg-password2" type="password" autocomplete="new-password" placeholder="••••••••" />
+      <div class="error" id="reg-error"></div>
+      <button class="btn" onclick="doRegister()">Create account</button>
+    </div>
+  </div>
+
+  <script>
+    const API = "";   // same origin
+
+    function showTab(t) {
+      document.getElementById("form-login").style.display    = t === "login"    ? "" : "none";
+      document.getElementById("form-register").style.display = t === "register" ? "" : "none";
+      document.getElementById("tab-login").classList.toggle("active",    t === "login");
+      document.getElementById("tab-register").classList.toggle("active", t === "register");
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add("show");
+    }
+    function hideError(id) {
+      document.getElementById(id).classList.remove("show");
+    }
+
+    async function doLogin() {
+      hideError("login-error");
+      const username = document.getElementById("login-username").value.trim();
+      const password = document.getElementById("login-password").value;
+      if (!username || !password) { showError("login-error", "Both fields are required."); return; }
+
+      try {
+        const res = await fetch(`${API}/api/auth/login/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showError("login-error", data.detail || "Invalid credentials."); return; }
+
+        sessionStorage.setItem("nc_access",  data.access);
+        sessionStorage.setItem("nc_refresh", data.refresh);
+        sessionStorage.setItem("nc_username", username);
+        window.location.href = "/chat/";
+      } catch {
+        showError("login-error", "Network error — is the server running?");
+      }
+    }
+
+    async function doRegister() {
+      hideError("reg-error");
+      const username     = document.getElementById("reg-username").value.trim();
+      const email        = document.getElementById("reg-email").value.trim();
+      const display_name = document.getElementById("reg-display").value.trim();
+      const password     = document.getElementById("reg-password").value;
+      const password2    = document.getElementById("reg-password2").value;
+
+      if (!username || !email || !password) { showError("reg-error", "Username, email and password are required."); return; }
+      if (password !== password2)           { showError("reg-error", "Passwords do not match."); return; }
+
+      try {
+        const res = await fetch(`${API}/api/auth/register/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, display_name, password, password2 }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msgs = Object.values(data).flat().join(" ");
+          showError("reg-error", msgs || "Registration failed.");
+          return;
+        }
+        // Auto-login after registration
+        document.getElementById("login-username").value = username;
+        document.getElementById("login-password").value = password;
+        showTab("login");
+        doLogin();
+      } catch {
+        showError("reg-error", "Network error — is the server running?");
+      }
+    }
+
+    // If already logged in, skip to chat
+    if (sessionStorage.getItem("nc_access")) {
+      window.location.href = "/chat/";
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      const loginVisible = document.getElementById("form-login").style.display !== "none";
+      if (loginVisible) doLogin(); else doRegister();
+    });
+  </script>
+</body>
+</html>
