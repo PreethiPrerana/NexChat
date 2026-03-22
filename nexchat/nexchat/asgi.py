@@ -16,8 +16,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "nexchat.settings")
 # Initialise Django before importing app-level modules.
 django_asgi_app = get_asgi_application()
 
-from chat.middleware import JWTAuthMiddleware  # noqa: E402 — must be after Django init
-from chat.routing import websocket_urlpatterns  # noqa: E402
+from chat.middleware import JWTAuthMiddleware
+from chat.routing import websocket_urlpatterns
 
 application = ProtocolTypeRouter(
     {
