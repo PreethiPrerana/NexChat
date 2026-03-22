@@ -3,6 +3,7 @@ djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 channels==4.1.0
 channels-redis==4.2.0
-psycopg2-binary==2.9.9
+mysqlclient==2.2.4
 python-decouple==3.8
-daphne==4.1.0
+uvicorn[standard]==0.30.6
+whitenoise==6.7.0
