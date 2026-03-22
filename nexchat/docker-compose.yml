@@ -1,0 +1,68 @@
+version: "3.9"
+
+#  NexChat docker-compose (production) 
+# Services:
+#   db      — MySQL 8
+#   redis   — Redis 7  (channel layer)
+#   web     — Django / Daphne (HTTP + WebSocket)
+#
+# Usage:
+#   docker compose up --build
+#   docker compose exec web python manage.py createsuperuser
+
+services:
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE:      ${MYSQL_DB:-nexchat}
+      MYSQL_USER:          ${MYSQL_USER:-nexchat}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD:-nexchat}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "${MYSQL_USER:-nexchat}", "-p${MYSQL_PASSWORD:-nexchat}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "3306:3306"   # expose for local DB tools; remove in production
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DJANGO_ENV:    prod
+      MYSQL_HOST:    db
+      REDIS_HOST:    redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - static_files:/app/staticfiles
+      - log_files:/app/logs
+
+volumes:
+  mysql_data:
+  redis_data:
+  static_files:
+  log_files:
